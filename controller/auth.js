@@ -47,14 +47,10 @@ export const login=async(req,resp)=>{
     
     const access=accesstoken(userid);
     let refresh;
-    console.log(access)
-    
-   const findusertoken=await checktoken({userid})
-  const insertnewtoken=inserttoken({userid})
-  refresh=insertnewtoken
    
+    try{
+   const findusertoken=await checktoken({userid}) 
    const tokendate=findusertoken[0].expired_at;
-   console.log(tokendate)
    const now=Date.now();
    if(now > tokendate){
     const addnewtoken=await updatetoken({userid})
@@ -62,7 +58,10 @@ export const login=async(req,resp)=>{
    } else{
     refresh=findusertoken[0].token
    }
-   
+}catch(err){
+refresh=inserttoken({userid})
+}
+
 resp.cookie("refresh",refresh,{
     httpOnly:true,
     secure:true,
@@ -94,7 +93,9 @@ export const otplogin=async(req,resp)=>{
         sub:"otp for login",
         text:`${otp}`
     })
+    
     return resp.status(200).json({success:true,message:"otp sent succesfully"})
+
 
     }catch(err){
 return resp.status(400).json({success:false,message:"otp set error"})
@@ -141,3 +142,13 @@ return resp.status(400).json({success:false,message:"otp verification failed"})
     }
 
 }
+
+
+export const file=(req,resp)=>{
+    if(!req.file){
+        return resp.status(400).json({success:false,message:"no file uploaded"})
+    }
+    return resp.status(200).json({success:true,message:"file upload success"})
+}
+
+
