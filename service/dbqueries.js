@@ -40,6 +40,7 @@ db.query(
 
 
 export const inserttoken=(data)=>{
+    console.log("entered to insert token")
     return new Promise((resolve,reject)=>{
         const userid=data.userid;
         const refresh=refreshtoken(userid)
@@ -52,7 +53,7 @@ export const inserttoken=(data)=>{
                  console.log("insertion problam from db")
                  return
                 }
-              return resolve("token insert succesfully",refresh)
+              return resolve(refresh)
             }
             
         )
@@ -76,11 +77,11 @@ db.query(
             return
         }
         if(res.length === 0){
-            // return reject("no user with this id")
-            inserttoken(data)
-            .then(resolve)
-            .catch(reject);
-            console.log("new token inserted")
+            return reject("null")
+            // inserttoken(data)
+            // .then(resolve)
+            // .catch(reject);
+            // console.log("new token inserted")
         }
         return resolve(res)
     }
@@ -95,13 +96,74 @@ export const updatetoken=(data)=>{
         const userid=data.userid;
         const refresh=refreshtoken(userid)
         db.query(
-            'update refreshtoken set token=? where user_id=?',
+            'update refreshtoken set token=?,added_at=now(),expired_at=date_add(now(),interval 7 day) where user_id=?',
             [refresh,data.userid],
             (err)=>{
                 if(err){
                     return reject("error updating token")
                 }
-                return resolve("update token success",refresh)
+                return resolve(refresh)
+            }
+        )
+    })
+}
+
+
+
+export const otpinsert=(data)=>{
+    return new Promise((resolve,reject)=>{
+        db.query(
+            'insert into otpauth (id,email,otp,added_at,expire_at) values (?,?,?,now(),date_add(now(), interval 2 minute))',
+            [data.id,data.email,data.otp],
+            (err)=>{
+                if(err){
+                    return reject("otp not set")
+                }
+               return resolve("otp set succesfully")
+            }
+        )
+    })
+   
+}
+
+
+export const getotp=(data)=>{
+    console.log("entered to check otp")
+    return new Promise((resolve,reject)=>{
+        db.query(
+            'select * from  otpauth where email=?',
+            [data.email],
+            (err,res)=>{
+                if(err){
+                     reject("otp info failed")
+                    console.log("otp info failed")
+                    return
+                }
+                if(res.length === 0){
+                     reject("no user with this email")
+                    
+                    return
+                }
+               
+                return resolve(res);
+            }
+        )
+
+    })
+    
+}
+
+
+export const updateotp=(data)=>{
+    return new Promise((resolve,reject)=>{
+        db.query(
+            'update otpauth set otp=?,added_at=now(),expire_at=date_add(now(), interval 2 minute)  where id=?',
+            [data.newotp,data.id],
+            (err)=>{
+                if(err){
+                    return reject("otp update failed")
+                }
+                return resolve("otp update succesfully")
             }
         )
     })
