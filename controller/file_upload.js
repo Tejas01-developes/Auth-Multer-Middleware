@@ -1,10 +1,11 @@
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
+dotenv.config();
 
 
-
-const uploadfolder="upload"
+const uploadfolder=process.env.FOLDER_NAME
 if(!fs.existsSync(uploadfolder)){
     fs.mkdirSync(uploadfolder,{recursive:true});
 }
@@ -17,6 +18,7 @@ const storage=multer.diskStorage({
         const ext=path.extname(file.originalname);
         const name=path.basename(file.originalname,ext);
         const uniquename=name + "-" + Date.now() + ext
+        
         cb(null,uniquename)
     }
 })
@@ -39,3 +41,5 @@ export const upload=multer({
     limits:{fileSize:5 * 1024 * 1024},
     fileFilter:filefilter
 })
+
+

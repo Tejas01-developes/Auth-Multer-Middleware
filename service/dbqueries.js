@@ -168,3 +168,40 @@ export const updateotp=(data)=>{
         )
     })
 }
+
+
+
+export const storepath=(data)=>{
+    return new Promise((resolve,reject)=>{
+        db.query(
+            'insert into filesfol (filename,url) values (?,?)',
+            [data.filename,data.url],
+            (err)=>{
+                if(err){
+        reject("error upload image in db")
+                }
+                resolve("image uploaded in the db")
+            }
+        
+        )
+    })
+
+}
+
+
+export const geturl=(data)=>{
+    return new Promise((resolve,reject)=>{
+        db.query(
+            'select * from  filesfol where filename=?',
+            [data.filename],
+            (err,res)=>{
+                if(err){
+                    return reject("no file url info")
+                    
+                }
+                
+               return resolve(res[0].url);
+            }
+        )
+    })
+}

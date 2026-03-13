@@ -1,9 +1,13 @@
-import { checktoken, getotp, insertquery, inserttoken, loginquery, otpinsert, updateotp, updatetoken } from "../service/dbqueries.js";
+import { checktoken, getotp, geturl, insertquery, inserttoken, loginquery, otpinsert, storepath, updateotp, updatetoken } from "../service/dbqueries.js";
 import bcrypt from 'bcrypt';
 import { accesstoken, refreshtoken } from "../tokens/tokens.js";
 import path from "path";
-import { stringify } from "querystring";
+import dotenv from 'dotenv';
+import fs from 'fs';
 import { queue } from "../background_worker/task_queue.js";
+import { db } from "../dbconnection/db_connections.js";
+import mime from 'mime';
+dotenv.config();
 
 //register the user
 export const registeruser=async(req,resp)=>{
@@ -144,11 +148,46 @@ return resp.status(400).json({success:false,message:"otp verification failed"})
 }
 
 
-export const file=(req,resp)=>{
+export const file=async(req,resp)=>{
     if(!req.file){
-        return resp.status(400).json({success:false,message:"no file uploaded"})
+        return resp.status(400).json({success:false,message:"no file recived"})
     }
+     const filename=req.file.filename;
+     const folder="upload"
+   const filepath=path.join(folder,filename);
+   try{
+   const insertimage=await storepath({filename,url:filepath});
     return resp.status(200).json({success:true,message:"file upload success"})
+}catch(err){
+    return resp.status(400).json({success:false,message:"no file uploaded"}) 
+}
 }
 
 
+export const getimage=async(req,resp)=>{
+    const {filename}=req.body
+    // const {filename}=req.query
+    if(!filename){
+        return resp.status(400).json({success:false,message:"no file name recived"})
+    }
+    try{
+    const getimg=await geturl({filename})
+    
+    
+    if(!fs.existsSync(getimg)){
+        return resp.status(400).json({success:false,message:"no file on this path"})
+    }
+    const extname=path.extname(getimg).toLowerCase();
+    // if(extname === ".png") resp.setHeader("Content-Type", "image/png")
+    //     else if(extname === ".jpg" || extname === ".jpeg") resp.setHeader("Content-Type", "image/jpeg")
+    // else if(extname === ".gif") resp.setHeader("Content-Type", "image/gif")
+        const contenttype=mime.getType(extname);
+    resp.setHeader("Content-Type",contenttype);
+        fs.createReadStream(getimg).pipe(resp);
+        
+    return resp.status(200).json({success:true,message:"url fetch success"})
+
+}catch(err){
+    return resp.status(400).json({success:false,message:"url fetch filed"})
+}
+}
